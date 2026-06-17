@@ -13,20 +13,19 @@ def load_stats():
         with open(STATS_FILE, "r") as f:
             return json.load(f)
     except FileNotFoundError:
-        stats = {"1": None, "2": None, "3": None}
+        stats = {}
         save_stats(stats)
         return stats
-
-
+    
 def save_stats(stats):
     with open(STATS_FILE, "w") as f:
         json.dump(stats, f, indent=4)
 
 
 def find_player(stats, nome):
-    for slot, data in stats.items():
-        if data is not None and data["nome"].lower() == nome.lower():
-            return slot, data
+    for key, data in stats.items():
+        if key.lower() == nome.lower():
+            return key, data
     return None, None
 
 
@@ -34,24 +33,21 @@ def get_player_stats(stats, nome):
     _, data = find_player(stats, nome)
     if data is not None:
         return data
-    return {"nome": nome, "vitorias": 0, "derrotas": 0, "empates": 0}
+    return {"vitorias": 0, "derrotas": 0, "empates": 0}
 
 
 def save_player_result(stats, nome, resultado):
-    slot, data = find_player(stats, nome)
+    key, data = find_player(stats, nome)
     if data is None:
-        slot = next((s for s, v in stats.items() if v is None), None)
-        if slot is None:
-            print(f"⚠️  Todos os slots estão ocupados. {nome} não foi salvo.")
-            return
-        data = {"nome": nome, "vitorias": 0, "derrotas": 0, "empates": 0}
+        key = nome
+        data = {"vitorias": 0, "derrotas": 0, "empates": 0}
     if resultado == "vitoria":
         data["vitorias"] += 1
     elif resultado == "derrota":
         data["derrotas"] += 1
     elif resultado == "empate":
         data["empates"] += 1
-    stats[slot] = data
+    stats[key] = data
 
 def print_board(board, jogador1, jogador2):
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -201,7 +197,7 @@ def main():
             nome_busca = input("Digite o nome do jogador que deseja buscar: ").strip()
 
             stats = load_stats()
-            slot, data = find_player(stats, nome_busca)
+            chave, data = find_player(stats, nome_busca)
 
             print("")
             if not nome_busca:
@@ -214,12 +210,11 @@ def main():
                     return "│" + texto + " " * (largura - len(texto)) + "│"
 
                 print("╭" + "─" * largura + "╮")
-                print(linha_box(f"   Nome: {data['nome']}"))
+                print(linha_box(f"   Nome: {chave}"))
                 print(linha_box(f"   Vitórias: {data['vitorias']}"))
                 print(linha_box(f"   Derrotas: {data['derrotas']}"))
                 print(linha_box(f"   Empates: {data['empates']}"))
                 print("╰" + "─" * largura + "╯")
-
             print("")
             print("───────────────────────────────────────────────")
             print("       [Pressione qualquer tecla para voltar]")
