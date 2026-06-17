@@ -193,30 +193,36 @@ def main():
             print("           [Pressione qualquer tecla para voltar]")
             msvcrt.getch()
         elif choose == 3:
-            try:
-                with open("data/game_data.json", "r") as f:
-                    stats = json.load(f)
-            except FileNotFoundError:
-                game_data= {
-                    "1": None,
-                    "2": None,
-                    "3": None
-                }
-                with open("data/game_data.json", "w") as f:
-                    json.dump(game_data, f, indent=4)
-                stats = game_data
             os.system('cls' if os.name == 'nt' else 'clear')
             print("╭───────────────────────────────────────────────╮")
-            print("│             ✕ ○ ESTÁTISTICAS ○ ✕              │")
+            print("│             ✕ ○ ESTATÍSTICAS ○ ✕              │")
             print("╰───────────────────────────────────────────────╯")
-            print(" ")
-            for num_slot in ["1", "2", "3"]:
-                if stats[num_slot] is None:
-                    print("╭───────────────────────────────────────────────╮")
-                    print(f"│   Slot {num_slot:<39}│")
-                    print("│   - SLOT VAZIO -                              │")
-                    print("╰───────────────────────────────────────────────╯")
-                    print("")
+            print("")
+            nome_busca = input("Digite o nome do jogador que deseja buscar: ").strip()
+
+            stats = load_stats()
+            slot, data = find_player(stats, nome_busca)
+
+            print("")
+            if not nome_busca:
+                print("⚠️  Você não digitou nenhum nome.")
+            elif data is None:
+                print(f"❌ Nenhum jogador encontrado com o nome '{nome_busca}'.")
+            else:
+                largura = 47
+                def linha_box(texto=""):
+                    return "│" + texto + " " * (largura - len(texto)) + "│"
+
+                print("╭" + "─" * largura + "╮")
+                print(linha_box(f"   Nome: {data['nome']}"))
+                print(linha_box(f"   Vitórias: {data['vitorias']}"))
+                print(linha_box(f"   Derrotas: {data['derrotas']}"))
+                print(linha_box(f"   Empates: {data['empates']}"))
+                print("╰" + "─" * largura + "╯")
+
+            print("")
+            print("───────────────────────────────────────────────")
+            print("       [Pressione qualquer tecla para voltar]")
             msvcrt.getch()
         elif choose == 4:
             os.system('cls' if os.name == 'nt' else 'clear')
