@@ -5,6 +5,54 @@ import sys
 
 os.makedirs("data", exist_ok=True)
 
+STATS_FILE = "data/game_data.json"
+
+
+def load_stats():
+    try:
+        with open(STATS_FILE, "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        stats = {"1": None, "2": None, "3": None}
+        save_stats(stats)
+        return stats
+
+
+def save_stats(stats):
+    with open(STATS_FILE, "w") as f:
+        json.dump(stats, f, indent=4)
+
+
+def find_player(stats, nome):
+    for slot, data in stats.items():
+        if data is not None and data["nome"].lower() == nome.lower():
+            return slot, data
+    return None, None
+
+
+def get_player_stats(stats, nome):
+    _, data = find_player(stats, nome)
+    if data is not None:
+        return data
+    return {"nome": nome, "vitorias": 0, "derrotas": 0, "empates": 0}
+
+
+def save_player_result(stats, nome, resultado):
+    slot, data = find_player(stats, nome)
+    if data is None:
+        slot = next((s for s, v in stats.items() if v is None), None)
+        if slot is None:
+            print(f"⚠️  Todos os slots estão ocupados. {nome} não foi salvo.")
+            return
+        data = {"nome": nome, "vitorias": 0, "derrotas": 0, "empates": 0}
+    if resultado == "vitoria":
+        data["vitorias"] += 1
+    elif resultado == "derrota":
+        data["derrotas"] += 1
+    elif resultado == "empate":
+        data["empates"] += 1
+    stats[slot] = data
+
 def print_board(board, jogador1, jogador2):
     os.system('cls' if os.name == 'nt' else 'clear')
     print(f"  {board[0]} │ {board[1]} │ {board[2]}")
@@ -68,6 +116,9 @@ def main():
             jogador1 = input("Digite o nome do Jogador 1 (X): ")
             jogador2 = input("Digite o nome do Jogador 2 (O): ")
             os.system('cls' if os.name == 'nt' else 'clear')
+            stats = load_stats()
+            stats_j1 = get_player_stats(stats, jogador1)
+            stats_j2 = get_player_stats(stats, jogador2)
             board = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
             players = {"X": jogador1, "O": jogador2}
             current = "X"
@@ -80,6 +131,36 @@ def main():
                     print("Valor inválido! Pressione uma tecla...")
                     msvcrt.getch()
                     continue
+
+                if pos < 0 or pos > 8 or board[pos] in ("X", "O"):
+                    print("Posição inválida ou ocupada! Pressione uma tecla...")
+                    msvcrt.getch()
+                    continue
+
+                board[pos] = current
+
+                winner = vitoria(board)
+                if winner:
+                    print_board(board, jogador1, jogador2)
+                    vencedor = players[winner]
+                    perdedor = jogador2 if vencedor == jogador1 else jogador1
+                    print(f"🏆 {vencedor} venceu!")
+                    save_player_result(stats, vencedor, "vitoria")
+                    save_player_result(stats, perdedor, "derrota")
+                    save_stats(stats)
+                    msvcrt.getch()
+                    break
+
+                if empate(board):
+                    print_board(board, jogador1, jogador2)
+                    print("Empate!")
+                    save_player_result(stats, jogador1, "empate")
+                    save_player_result(stats, jogador2, "empate")
+                    save_stats(stats)
+                    msvcrt.getch()
+                    break
+
+                current = "O" if current == "X" else "X"
 
 
         elif choose == 2:
